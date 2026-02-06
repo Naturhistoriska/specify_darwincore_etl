@@ -23,6 +23,9 @@ dev = [
     "types-tqdm",
 ]
 
+[tool.setuptools]
+packages = ["etl"]
+
 [tool.ruff]
 # Target version for the generated code
 target-version = "py312"
