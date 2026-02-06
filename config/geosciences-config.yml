@@ -1,0 +1,13 @@
+zip_path: "./data//nrm-geo-minerals.zip"
+extract_dir: "./data/geosciences/extracted"
+output_dir: "./data/geosciences/output"
+url: http://geosciences.nrm.se/static/depository/export_feed/nrm-geo-minerals.zip
+output_separator: "\t"
+output_extension: ".txt"
+download_retries: 3
+download_backoff_factor: 0.3
+log_format: "json"
+read_encoding: "utf-8"
+write_encoding: "utf-8"
+on_bad_lines: "warn"
+deduplicate_columns: []

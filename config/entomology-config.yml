@@ -1,0 +1,13 @@
+zip_path: "./data/nrm-zoo-ent.zip"
+extract_dir: "./data/entomology/extracted"
+output_dir: "./data/entomology/output"
+url: http://entomology.nrm.se/static/depository/export_feed/nrm-zoo-ent.zip
+output_separator: "\t"
+output_extension: ".txt"
+download_retries: 3
+download_backoff_factor: 0.3
+log_format: "json"
+read_encoding: "utf-8"
+write_encoding: "utf-8"
+on_bad_lines: "warn"
+deduplicate_columns: []
