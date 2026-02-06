@@ -1,0 +1,11 @@
+services:
+  specify_darwincore_etl:
+    build: .
+    image: specify_darwincore_etl:latest
+    container_name: specify_darwincore_etl
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+    extra_hosts:
+      - "entomology.nrm.se:172.16.0.166"
+      - "geosciences.nrm.se:172.16.0.166"
