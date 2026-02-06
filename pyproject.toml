@@ -1,0 +1,66 @@
+[project]
+name = "specify_darwincore_etl"
+version = "0.1.0"
+description = "ETL pipeline for Darwin Core data from Specify"
+requires-python = ">=3.12"
+dependencies = [
+    "dask[dataframe]==2026.1.1",
+    "pandas>=2.0.0",
+    "PyYAML>=6.0.0",
+    "requests>=2.30.0",
+    "tqdm>=4.65.0",
+    "dwcahandler==1.1.0",
+    "pydantic>=2.10.0",
+    "python-json-logger>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff==0.9.3",
+    "mypy==1.14.1",
+    "types-PyYAML==6.0.12.20241230",
+    "types-requests==2.32.0.20241016",
+    "types-tqdm",
+]
+
+[tool.ruff]
+# Target version for the generated code
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+# Enable specific rule sets
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "C4",  # flake8-comprehensions
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+]
+ignore = []
+
+# Allow autofix for all enabled rules (when supported)
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["etl"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = false
+
+[[tool.mypy.overrides]]
+module = [
+    "dask.*",
+    "pythonjsonlogger.*",
+    "requests.*",
+    "yaml.*",
+    "dwcahandler.*"
+]
+ignore_missing_imports = true

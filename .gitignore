@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+*.so
+
+# Virtual environment
+.venv/
+venv/
+
+# IDE-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Tools caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local data and output
+data/
+
+# Logs
+*.log
+
+# Project specific
+.env
+
