@@ -104,6 +104,15 @@ To run the ETL pipeline locally:
     python main.py config/entomology-config.yml --log-level INFO
     ```
 
+    Choose a pipeline mode if needed (default is `both`):
+    ```bash
+    # Download and extract only
+    python main.py config/entomology-config.yml --mode download-only
+
+    # Process only (expects extracted files and meta.xml to already exist)
+    python main.py config/entomology-config.yml --mode process-only
+    ```
+
 ## Docker Deployment
 
 ### 1. Build the Docker Image
@@ -140,4 +149,9 @@ docker-compose run --rm specify_darwincore_etl python main.py config/entomology-
 You can also specify a logging level:
 ```bash
 docker-compose run --rm specify_darwincore_etl python main.py config/entomology-config.yml --log-level INFO
+```
+And you can control the run mode:
+```bash
+docker-compose run --rm specify_darwincore_etl python main.py config/entomology-config.yml --mode download-only
+docker-compose run --rm specify_darwincore_etl python main.py config/entomology-config.yml --mode process-only
 ```

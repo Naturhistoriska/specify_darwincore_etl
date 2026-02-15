@@ -42,42 +42,50 @@ class ETLPipeline:
             return str(core_id_name)
         return "id" if archive_metadata.core.id_index is not None else None
 
-    def run(self) -> None:
-        """Executes the full ETL pipeline."""
+    def _run_extraction_phase(self) -> None:
+        """Runs the download and archive extraction phase."""
+        start_time = time.time()
+        download_data(
+            str(self.config.url),
+            self.config.zip_path,
+            retries=self.config.download_retries,
+            backoff_factor=self.config.download_backoff_factor,
+        )
+        extract_archive(self.config.zip_path, self.config.extract_dir)
+        logging.info(f"Extraction phase completed in {time.time() - start_time:.2f} seconds")
+
+    def _run_processing_phase(self) -> None:
+        """Parses metadata and processes core/extension files."""
+        meta_path = self.config.extract_dir / "meta.xml"
+        if not meta_path.exists():
+            raise ETLError(f"meta.xml not found in {self.config.extract_dir}")
+
+        archive_metadata = parse_meta_xml(meta_path)
+        core_id_column = self._determine_core_id_column(archive_metadata)
+        files_to_process = [archive_metadata.core] + archive_metadata.extensions
+
+        total_start_time = time.time()
+        for file_metadata in tqdm(files_to_process, desc="Processing DWCA files"):
+            self._process_file(file_metadata, core_id_column)
+
+        logging.info(
+            f"All files processed in {time.time() - total_start_time:.2f} seconds. "
+            f"Outputs in {self.config.output_dir}"
+        )
+
+    def run(self, mode: str = "both") -> None:
+        """Executes the ETL pipeline for the selected mode."""
         try:
             apply_dwcahandler_patches()
             self._prepare_directories()
 
-            # --- Extraction Phase ---
-            start_time = time.time()
-            download_data(
-                str(self.config.url),
-                self.config.zip_path,
-                retries=self.config.download_retries,
-                backoff_factor=self.config.download_backoff_factor,
-            )
-            extract_archive(self.config.zip_path, self.config.extract_dir)
-            logging.info(f"Extraction phase completed in {time.time() - start_time:.2f} seconds")
+            if mode in ("both", "download-only"):
+                self._run_extraction_phase()
+                if mode == "download-only":
+                    logging.info("Download-only mode complete; skipping processing phase.")
 
-            # --- Metadata Parsing ---
-            meta_path = self.config.extract_dir / "meta.xml"
-            if not meta_path.exists():
-                raise ETLError(f"meta.xml not found in {self.config.extract_dir}")
-
-            archive_metadata = parse_meta_xml(meta_path)
-            core_id_column = self._determine_core_id_column(archive_metadata)
-
-            files_to_process = [archive_metadata.core] + archive_metadata.extensions
-
-            # --- Processing Phase ---
-            total_start_time = time.time()
-            for file_metadata in tqdm(files_to_process, desc="Processing DWCA files"):
-                self._process_file(file_metadata, core_id_column)
-
-            logging.info(
-                f"All files processed in {time.time() - total_start_time:.2f} seconds. "
-                f"Outputs in {self.config.output_dir}"
-            )
+            if mode in ("both", "process-only"):
+                self._run_processing_phase()
 
         except ETLError as e:
             logging.error(f"ETL pipeline failed: {e}")
@@ -132,6 +140,12 @@ def main() -> None:
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logging level",
     )
+    parser.add_argument(
+        "--mode",
+        default="both",
+        choices=["both", "download-only", "process-only"],
+        help="Pipeline run mode: run both phases, only download/extract, or only process extracted data.",
+    )
     args = parser.parse_args()
 
     try:
@@ -146,7 +160,7 @@ def main() -> None:
     setup_logging(log_level=args.log_level, log_format=config.log_format)
 
     pipeline = ETLPipeline(config)
-    pipeline.run()
+    pipeline.run(mode=args.mode)
 
 
 if __name__ == "__main__":
