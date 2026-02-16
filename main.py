@@ -103,7 +103,8 @@ class ETLPipeline:
                         self._run_unzip_phase()
                     else:
                         raise ETLError(
-                            f"meta.xml not found in {self.config.extract_dir} and archive not found at {self.config.zip_path}"
+                            f"meta.xml not found in {self.config.extract_dir} "
+                            f"and archive not found at {self.config.zip_path}"
                         )
                 self._run_processing_phase()
 
