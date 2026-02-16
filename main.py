@@ -42,8 +42,8 @@ class ETLPipeline:
             return str(core_id_name)
         return "id" if archive_metadata.core.id_index is not None else None
 
-    def _run_extraction_phase(self) -> None:
-        """Runs the download and archive extraction phase."""
+    def _run_download_phase(self) -> None:
+        """Downloads the archive zip from the configured URL."""
         start_time = time.time()
         download_data(
             str(self.config.url),
@@ -51,8 +51,15 @@ class ETLPipeline:
             retries=self.config.download_retries,
             backoff_factor=self.config.download_backoff_factor,
         )
+        logging.info(f"Download phase completed in {time.time() - start_time:.2f} seconds")
+
+    def _run_unzip_phase(self) -> None:
+        """Extracts the configured archive zip into extract_dir."""
+        start_time = time.time()
+        if not self.config.zip_path.exists():
+            raise ETLError(f"Archive not found at {self.config.zip_path}")
         extract_archive(self.config.zip_path, self.config.extract_dir)
-        logging.info(f"Extraction phase completed in {time.time() - start_time:.2f} seconds")
+        logging.info(f"Unzip phase completed in {time.time() - start_time:.2f} seconds")
 
     def _run_processing_phase(self) -> None:
         """Parses metadata and processes core/extension files."""
@@ -73,18 +80,31 @@ class ETLPipeline:
             f"Outputs in {self.config.output_dir}"
         )
 
-    def run(self, mode: str = "both") -> None:
+    def run(self, mode: str = "all") -> None:
         """Executes the ETL pipeline for the selected mode."""
         try:
             apply_dwcahandler_patches()
             self._prepare_directories()
 
-            if mode in ("both", "download-only"):
-                self._run_extraction_phase()
-                if mode == "download-only":
-                    logging.info("Download-only mode complete; skipping processing phase.")
+            if mode in ("all", "download"):
+                self._run_download_phase()
+                self._run_unzip_phase()
+                if mode == "download":
+                    logging.info("Download mode complete; skipping processing phase.")
 
-            if mode in ("both", "process-only"):
+            if mode in ("all", "process"):
+                if mode == "process" and not (self.config.extract_dir / "meta.xml").exists():
+                    if self.config.zip_path.exists():
+                        logging.info(
+                            "Extracted data missing in %s; unzipping existing archive %s",
+                            self.config.extract_dir,
+                            self.config.zip_path,
+                        )
+                        self._run_unzip_phase()
+                    else:
+                        raise ETLError(
+                            f"meta.xml not found in {self.config.extract_dir} and archive not found at {self.config.zip_path}"
+                        )
                 self._run_processing_phase()
 
         except ETLError as e:
@@ -142,9 +162,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--mode",
-        default="both",
-        choices=["both", "download-only", "process-only"],
-        help="Pipeline run mode: run both phases, only download/extract, or only process extracted data.",
+        default="all",
+        choices=["all", "download", "process"],
+        help="Pipeline run mode: run all phases, only download/unzip, or only process extracted data.",
     )
     args = parser.parse_args()
 
