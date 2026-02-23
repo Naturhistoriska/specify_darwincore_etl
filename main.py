@@ -93,18 +93,19 @@ class ETLPipeline:
                     logging.info("Download mode complete; skipping processing phase.")
 
             if mode in ("all", "process"):
-                if mode == "process" and not (self.config.extract_dir / "meta.xml").exists():
+                if mode == "process":
                     if self.config.zip_path.exists():
                         logging.info(
-                            "Extracted data missing in %s; unzipping existing archive %s",
-                            self.config.extract_dir,
+                            "Process mode: archive %s found; extracting into %s before processing",
                             self.config.zip_path,
+                            self.config.extract_dir,
                         )
                         self._run_unzip_phase()
                     else:
-                        raise ETLError(
-                            f"meta.xml not found in {self.config.extract_dir} "
-                            f"and archive not found at {self.config.zip_path}"
+                        logging.info(
+                            "Process mode: archive not found at %s; processing existing extracted files in %s",
+                            self.config.zip_path,
+                            self.config.extract_dir,
                         )
                 self._run_processing_phase()
 

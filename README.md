@@ -109,7 +109,7 @@ To run the ETL pipeline locally:
     # Download and extract only
     python main.py config/entomology-config.yml --mode download
 
-    # Process only (uses extracted files if present; otherwise unzips existing zip_path archive)
+    # Process only (always unzips first when zip_path exists; otherwise processes existing extracted files)
     python main.py config/entomology-config.yml --mode process
     ```
 
